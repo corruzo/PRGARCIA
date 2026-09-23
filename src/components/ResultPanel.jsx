@@ -76,8 +76,20 @@ export function ResultPanel({ resultado, nombreCliente = '', onSaveQuote }) {
 
   const cronogramaLocal = resultado?.valido ? generarCronograma(resultado) : [];
   const cuotasDetalleTexto = cronogramaLocal
-    .map(c => `• Cuota ${c.cuota} (${c.fecha}): ${fmtP(c.total)}`)
+    .map(c => {
+      const montoUSD = moneda === 'USD' ? c.total : c.totalAlterna;
+      const montoVES = moneda === 'VES' ? c.total : c.totalAlterna;
+      const fmtUSD = formatearMoneda(montoUSD, 'USD');
+      const fmtVES = formatearMoneda(montoVES, 'VES');
+
+      if (moneda === 'VES') {
+        return `• Cuota ${c.cuota} (${c.fecha}): ${fmtUSD} USD (Ref. hoy: ${fmtVES})`;
+      } else {
+        return `• Cuota ${c.cuota} (${c.fecha}): ${fmtUSD} USD`;
+      }
+    })
     .join('\n');
+
   const fechaHoyStr = format(new Date(), 'dd/MM/yyyy');
   const nombre = nombreCliente.trim() || 'Estimado cliente';
 
@@ -85,17 +97,21 @@ export function ResultPanel({ resultado, nombreCliente = '', onSaveQuote }) {
     ? `(equivalente en Bs.: ${fmtA(totalAlterna)})`
     : `(equivalente en USD: ${fmtA(totalAlterna)})`;
 
+  const notaIndexacion = moneda === 'VES'
+    ? `*Protección de pago en Bs.:* Aunque el préstamo esté calculado en Bolívares (Bs.), todas las cuotas futuras están indexadas a su valor base en Dólares ($ USD) para evitar pérdidas por depreciación. Si cancelas en Bolívares, se calculará al tipo de cambio oficial del BCV vigente en la fecha exacta de tu pago.`
+    : `*Nota:* Todas las cuotas se cobran en Dólares ($ USD). Si se efectúa el pago en Bolívares (Bs.), se liquidará a la tasa oficial del BCV en la fecha exacta de tu pago.`;
+
   const whatsappMessage = encodeURIComponent(
     `Hola ${nombre}, los datos de tu solicitud de préstamo son:\n\n` +
     `• Monto del préstamo: ${fmtP(monto)}\n` +
     `• Plazo de pago: ${diasTotales} días\n` +
     `• Intereses Generados: ${fmtP(interes)}\n` +
     `• Total a cobrar: ${fmtP(totalPagar)} ${equivalenteBolivaresStr}\n\n` +
-    `*Cuotas de pago:*\n` +
+    `*Cuotas de pago (base en USD):*\n` +
     `${cuotasDetalleTexto}\n\n` +
     `• Tasa del dólar BCV hoy: Bs. ${parseFloat(tasaBCV).toFixed(2)}\n` +
     `• Fecha de hoy: ${fechaHoyStr}\n\n` +
-    `*Nota:* Los montos equivalentes en Bolívares (Bs.) son volátiles por el cambio de la tasa del dólar y pueden variar según la tasa oficial del día en que se efectúe cada pago.`
+    `${notaIndexacion}`
   );
 
   const whatsappUrl = `https://wa.me/?text=${whatsappMessage}`;
@@ -193,11 +209,10 @@ export function ResultPanel({ resultado, nombreCliente = '', onSaveQuote }) {
       )}
 
       {!esUSD && (
-        <div className="currency-notice flex items-start gap-2 p-3 rounded-lg">
-          <Info size={13} className="currency-accent mt-0.5 shrink-0" />
-          <p className="currency-accent text-xs leading-relaxed">
-            <strong>Préstamo en VES:</strong> Puede liquidarse en Bs. o en USD
-            a la tasa BCV del día de pago.
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700">
+          <Info size={13} className="text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+          <p className="text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">
+            <strong>Protección cambiaria (VES):</strong> Aunque la cotización sea en Bolívares, todas las cuotas futuras quedan indexadas a su valor base en Dólares (<span className="font-mono">{formatearMoneda(cuotaAlterna, 'USD')} USD</span>) al cambio BCV del día (hoy: <span className="font-mono">Bs. {parseFloat(tasaBCV).toFixed(2)}</span>) para evitar pérdidas por depreciación.
           </p>
         </div>
       )}
