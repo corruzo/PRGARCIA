@@ -1,8 +1,9 @@
-import { UserRound, DollarSign, Calendar, Percent, BarChart3 } from 'lucide-react';
+import { UserRound, DollarSign, Calendar, Percent, BarChart3, HelpCircle } from 'lucide-react';
 import { BCVField } from './BCVField';
+import { useState } from 'react';
 
 const MODALIDADES = [
-  { value: 'diaria',   label: 'Diaria' },
+  { value: 'diaria',   label: 'Diaria (1d)' },
   { value: 'semanal',  label: 'Semanal (7d)' },
   { value: 'quincenal', label: 'Quincenal (15d)' },
 ];
@@ -27,9 +28,15 @@ function FieldGroup({ children, className = '' }) {
 }
 
 export function LoanForm({ values, onChange }) {
+  const [activeHelp, setActiveHelp] = useState(null); // 'modalidad' | 'frecuencia' | 'moneda' | null
+
   const set = (key) => (e) => {
     const val = e?.target ? e.target.value : e;
     onChange(key, val);
+  };
+
+  const toggleHelp = (key) => {
+    setActiveHelp(prev => prev === key ? null : key);
   };
 
   return (
@@ -61,14 +68,25 @@ export function LoanForm({ values, onChange }) {
 
           {/* Moneda toggle */}
           <div>
-            <label className="label-base flex items-center justify-between">
-              <span>Moneda del Préstamo</span>
-              <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
-                {values.moneda === 'USD' ? 'Dólares (Divisa)' : 'Bolívares (Digital)'}
-              </span>
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="label-base mb-0">Moneda del Préstamo</label>
+              <button
+                type="button"
+                onClick={() => toggleHelp('moneda')}
+                className="text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors p-0.5"
+                title="¿Cómo funciona la moneda?"
+              >
+                <HelpCircle size={15} />
+              </button>
+            </div>
+
+            {activeHelp === 'moneda' && (
+              <div className="mb-2 p-2.5 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-[11px] text-blue-900 dark:text-blue-200 animate-fade-in leading-relaxed">
+                💡 <strong>Préstamo Bimoneda:</strong> Si seleccionas USD, los montos se presentan en dólares con equivalencia automática en Bolívares (Bs.) según la tasa oficial del BCV editable abajo.
+              </div>
+            )}
+
             <div className="relative grid grid-cols-2 p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-inner">
-              {/* Indicador deslizante animado */}
               <span
                 aria-hidden="true"
                 className={`absolute inset-y-1.5 left-1.5 w-[calc(50%-0.375rem)] rounded-xl shadow-md transition-all duration-300 cubic-bezier(0.4,0,0.2,1) ${
@@ -78,7 +96,6 @@ export function LoanForm({ values, onChange }) {
                 }`}
               />
 
-              {/* Opción USD */}
               <button
                 type="button"
                 onClick={() => onChange('moneda', 'USD')}
@@ -95,7 +112,6 @@ export function LoanForm({ values, onChange }) {
                 <span>USD · Divisas</span>
               </button>
 
-              {/* Opción VES */}
               <button
                 type="button"
                 onClick={() => onChange('moneda', 'VES')}
@@ -129,12 +145,12 @@ export function LoanForm({ values, onChange }) {
                 placeholder="0.00"
                 value={values.monto}
                 onChange={set('monto')}
-                className="currency-input input-base pl-9 font-mono text-base"
+                className="currency-input input-base pl-9 font-mono text-base font-bold"
               />
             </div>
           </div>
 
-          {/* Tasa BCV */}
+          {/* Tasa BCV Editable */}
           <BCVField value={values.tasaBCV} onChange={(v) => onChange('tasaBCV', v)} />
         </FieldGroup>
       </section>
@@ -143,10 +159,25 @@ export function LoanForm({ values, onChange }) {
 
       {/* ── Interés ── */}
       <section>
-        <SectionTitle icon={Percent}>Tasa de Interés</SectionTitle>
+        <div className="flex items-center justify-between mb-2">
+          <SectionTitle icon={Percent}>Tasa de Interés</SectionTitle>
+          <button
+            type="button"
+            onClick={() => toggleHelp('modalidad')}
+            className="flex items-center gap-1 text-[11px] font-semibold text-brand-600 dark:text-brand-400 hover:underline"
+          >
+            <HelpCircle size={14} /> ¿Qué es Modalidad?
+          </button>
+        </div>
+
+        {activeHelp === 'modalidad' && (
+          <div className="mb-3 p-3 rounded-xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-xs text-amber-900 dark:text-amber-200 animate-fade-in leading-relaxed">
+            💡 <strong>Modalidad de la Tasa:</strong> Es el período base al que corresponde el porcentaje. Por ejemplo, un 10% <em>quincenal</em> significa 10% por cada 15 días (es decir, ~0.66% por día).
+          </div>
+        )}
+
         <FieldGroup>
           <div className="grid grid-cols-2 gap-3">
-            {/* Tasa numérica */}
             <div>
               <label className="label-base">Tasa (%)</label>
               <div className="relative">
@@ -158,22 +189,18 @@ export function LoanForm({ values, onChange }) {
                   placeholder="0.00"
                   value={values.tasa}
                   onChange={set('tasa')}
-                  className="input-base pr-7 font-mono transition-all duration-200 focus:scale-[1.01]"
+                  className="input-base pr-7 font-mono font-bold"
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 select-none">%</span>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 select-none">%</span>
               </div>
             </div>
 
-            {/* Modalidad */}
             <div>
-              <label className="label-base flex items-center justify-between">
-                <span>Modalidad</span>
-                <span className="text-[10px] text-gray-400 font-normal normal-case">Base de la tasa</span>
-              </label>
+              <label className="label-base">Modalidad Tasa</label>
               <select
                 value={values.modalidadTasa}
                 onChange={set('modalidadTasa')}
-                className="input-base cursor-pointer transition-all duration-200"
+                className="input-base cursor-pointer font-semibold"
               >
                 {MODALIDADES.map(m => (
                   <option key={m.value} value={m.value}>{m.label}</option>
@@ -181,9 +208,6 @@ export function LoanForm({ values, onChange }) {
               </select>
             </div>
           </div>
-          <p className="text-[11px] text-gray-400 dark:text-gray-500 italic">
-            La modalidad define el período base al que corresponde el porcentaje ingresado.
-          </p>
         </FieldGroup>
       </section>
 
@@ -201,7 +225,7 @@ export function LoanForm({ values, onChange }) {
                 aria-label="Fecha de inicio del préstamo"
                 value={values.fechaInicio}
                 onChange={set('fechaInicio')}
-                className="input-base transition-all duration-200"
+                className="input-base"
               />
             </div>
             <div>
@@ -212,7 +236,7 @@ export function LoanForm({ values, onChange }) {
                 value={values.fechaFin}
                 onChange={set('fechaFin')}
                 min={values.fechaInicio}
-                className="input-base transition-all duration-200"
+                className="input-base"
               />
             </div>
           </div>
@@ -221,15 +245,25 @@ export function LoanForm({ values, onChange }) {
 
       <div className="border-t border-gray-100 dark:border-gray-800" />
 
-      {/* ── Frecuencia de pago ── */}
+      {/* ── Frecuencia de cobro ── */}
       <section>
         <div className="flex items-center justify-between mb-2">
           <SectionTitle icon={BarChart3}>Frecuencia de Cobro</SectionTitle>
-          <span className="text-[10px] text-gray-400 font-normal">Periodicidad del abono</span>
+          <button
+            type="button"
+            onClick={() => toggleHelp('frecuencia')}
+            className="flex items-center gap-1 text-[11px] font-semibold text-brand-600 dark:text-brand-400 hover:underline"
+          >
+            <HelpCircle size={14} /> ¿Cómo se cobra?
+          </button>
         </div>
-        <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-3 italic">
-          Cada cuántos días el cliente realizará sus pagos. Si la última cuota dura menos días, se cobrarán únicamente los días exactos transcurridos.
-        </p>
+
+        {activeHelp === 'frecuencia' && (
+          <div className="mb-3 p-3 rounded-xl bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-xs text-emerald-900 dark:text-emerald-200 animate-fade-in leading-relaxed">
+            💡 <strong>Regla de Cobro Día a Día:</strong> Cada cuota regular cubre su período (ej. 15d). Si la última cuota dura menos días (ej. 7d), se cobra estrictamente por esos 7 días exactos. Sin redondeos ni cobranzas injustas.
+          </div>
+        )}
+
         <div className="grid grid-cols-3 gap-2">
           {FRECUENCIAS.map(f => (
             <button
@@ -243,7 +277,7 @@ export function LoanForm({ values, onChange }) {
                   : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:border-brand-500/50 hover:bg-gray-50/50 dark:hover:bg-gray-800/50'
               }`}
             >
-              <span className="text-xs sm:text-sm font-semibold">{f.label}</span>
+              <span className="text-xs sm:text-sm font-bold">{f.label}</span>
               <span className={`text-[10px] sm:text-xs mt-0.5 ${values.frecuenciaPago === f.value ? 'text-blue-100' : 'text-gray-400'}`}>{f.sub}</span>
             </button>
           ))}

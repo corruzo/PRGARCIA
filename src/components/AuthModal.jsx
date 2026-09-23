@@ -123,8 +123,8 @@ export function AuthModal() {
           </button>
         </div>
 
-        {/* Formulario */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        {/* Formulario con Animación Smooth Tab */}
+        <form key={tab} onSubmit={handleSubmit} className="p-6 space-y-4 animate-fade-in">
           {error && (
             <div className="flex items-start gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 animate-fade-in">
               <AlertCircle size={14} className="text-red-500 mt-0.5 shrink-0" />
@@ -133,7 +133,7 @@ export function AuthModal() {
           )}
 
           {tab === 'register' && (
-            <div>
+            <div className="animate-fade-in">
               <label className="label-base">Nombre completo</label>
               <div className="relative">
                 <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -193,7 +193,11 @@ export function AuthModal() {
           </button>
 
           <p className="text-center text-[11px] text-gray-400 pt-2">
-            Al registrarte aceptas los términos del simulador de préstamo PRGARCÍA.
+            {tab === 'login' ? (
+              <span>¿No tienes cuenta? <button type="button" onClick={() => setTab('register')} className="text-brand-600 font-bold hover:underline">Regístrate aquí</button></span>
+            ) : (
+              <span>¿Ya tienes cuenta? <button type="button" onClick={() => setTab('login')} className="text-brand-600 font-bold hover:underline">Inicia sesión</button></span>
+            )}
           </p>
         </form>
       </section>

@@ -4,13 +4,11 @@ import { Header } from './components/Header';
 import { LoanForm } from './components/LoanForm';
 import { ResultPanel } from './components/ResultPanel';
 import { CronogramaTable } from './components/CronogramaTable';
-import { QuoteHistory } from './components/QuoteHistory';
 import { AuthModal } from './components/AuthModal';
 import { ProfileModal } from './components/ProfileModal';
-import { QuickCalculator } from './components/QuickCalculator';
+import { WelcomeLanding } from './components/WelcomeLanding';
 import { SavedQuotesView } from './components/SavedQuotesView';
-import { NavigationTabs } from './components/NavigationTabs';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { simularPrestamo, generarCronograma } from './utils/calculator';
 
 const HOY = format(new Date(), 'yyyy-MM-dd');
@@ -51,7 +49,8 @@ function loadHistory() {
 }
 
 function AppContent() {
-  const [activeTab, setActiveTab] = useState('quick'); // 'quick' | 'advanced' | 'saved'
+  const { user, loading } = useAuth();
+  const [activeTab, setActiveTab] = useState('calculator'); // 'calculator' | 'saved'
   const [showProfile, setShowProfile] = useState(false);
   const [values, setValues] = useState(loadDraft);
   const [history, setHistory] = useState(loadHistory);
@@ -109,46 +108,57 @@ function AppContent() {
 
   const abrirCotizacion = (item) => {
     setValues({ ...DEFAULTS, ...item.values });
-    setActiveTab('advanced');
+    setActiveTab('calculator');
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface-light dark:bg-surface-dark">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-600" />
+      </div>
+    );
+  }
+
+  // GUARDIÁN DE AUTENTICACIÓN: Si no hay sesión, muestra el Recibidor / Landing
+  if (!user) {
+    return (
+      <>
+        <WelcomeLanding />
+        <AuthModal />
+      </>
+    );
+  }
 
   return (
     <div
       className="currency-app app-canvas min-h-screen bg-surface-light dark:bg-surface-dark transition-colors duration-300"
       style={currencyColors}
     >
-      <Header onOpenProfile={() => setShowProfile(true)} />
+      <Header
+        activeTab={activeTab}
+        onChangeTab={setActiveTab}
+        onOpenProfile={() => setShowProfile(true)}
+        historyCount={history.length}
+      />
 
       <main className="mx-auto max-w-6xl px-4 py-6 lg:px-6 lg:py-9">
 
-        {/* Barra de Navegación por Modos */}
-        <NavigationTabs
-          activeTab={activeTab}
-          onChangeTab={setActiveTab}
-          historyCount={history.length}
-        />
-
-        {/* 1. MODO CALCULADORA RÁPIDA (CALLE) */}
-        {activeTab === 'quick' && (
-          <QuickCalculator tasaBCV={values.tasaBCV || 36.5} />
-        )}
-
-        {/* 2. MODO SIMULADOR AVANZADO */}
-        {activeTab === 'advanced' && (
-          <div className="space-y-6">
+        {/* 1. CALCULADORA UNIFICADA Y SIMPLIFICADA */}
+        {activeTab === 'calculator' && (
+          <div className="space-y-6 animate-fade-in">
             <div className="lg:grid lg:grid-cols-[1fr_380px] lg:gap-8 lg:items-start">
               {/* Formulario */}
               <section>
                 <div className="page-intro mb-5">
                   <div>
                     <h1 className="currency-accent text-xl font-bold leading-tight transition-colors duration-300">
-                      Simulador Avanzado de Préstamo
+                      Calculadora de Préstamo
                     </h1>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      Interés simple · Días reales · Doble moneda USD / VES
+                      Interés simple · Días reales · Tasa BCV editable
                     </p>
                   </div>
-                  <span className="workspace-badge">Modo Avanzado</span>
+                  <span className="workspace-badge">PRGARCÍA</span>
                 </div>
 
                 <div className="currency-panel rounded-2xl border bg-white dark:bg-gray-900/50 p-5 shadow-sm backdrop-blur">
@@ -159,13 +169,13 @@ function AppContent() {
               {/* Resultados */}
               <aside className="mt-6 lg:mt-0 lg:sticky lg:top-20">
                 <div className="mb-4 hidden lg:block">
-                  <h2 className="currency-accent text-base font-bold transition-colors duration-300">Resumen</h2>
+                  <h2 className="currency-accent text-base font-bold transition-colors duration-300">Resumen Financiero</h2>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Resultados en tiempo real</p>
                 </div>
 
                 <div className="currency-panel rounded-2xl border bg-white dark:bg-gray-900/50 p-5 shadow-sm backdrop-blur">
                   <div className="lg:hidden mb-4">
-                    <h2 className="currency-accent text-base font-bold transition-colors duration-300">Resumen</h2>
+                    <h2 className="currency-accent text-base font-bold transition-colors duration-300">Resumen Financiero</h2>
                   </div>
                   <ResultPanel resultado={resultado} nombreCliente={values.nombreCliente} onSaveQuote={guardarCotizacion} />
                 </div>
@@ -177,7 +187,7 @@ function AppContent() {
           </div>
         )}
 
-        {/* 3. MODO MIS COTIZACIONES GUARDADAS */}
+        {/* 2. MODO MIS COTIZACIONES GUARDADAS */}
         {activeTab === 'saved' && (
           <SavedQuotesView
             items={history}
