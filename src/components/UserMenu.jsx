@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { User, LogIn, UserPlus, LogOut, ChevronDown, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-export function UserMenu() {
+export function UserMenu({ onOpenProfile }) {
   const { user, openAuthModal, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
@@ -63,6 +63,18 @@ export function UserMenu() {
               <ShieldCheck size={11} /> Usuario Registrado
             </span>
           </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              onOpenProfile?.();
+            }}
+            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <User size={14} className="text-brand-600 dark:text-brand-400" />
+            Mi Perfil
+          </button>
 
           <button
             type="button"

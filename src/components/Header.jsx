@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { InfoModal } from './InfoModal';
 import { UserMenu } from './UserMenu';
 
-export function Header() {
+export function Header({ onOpenProfile }) {
   const { dark, toggle } = useTheme();
   const [showInfo, setShowInfo] = useState(false);
 
@@ -28,7 +28,7 @@ export function Header() {
             {dark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
           <div className="h-4 w-[1px] bg-gray-200 dark:bg-gray-800 mx-0.5" />
-          <UserMenu />
+          <UserMenu onOpenProfile={onOpenProfile} />
         </div>
       </div>
       <InfoModal open={showInfo} onClose={() => setShowInfo(false)} />
