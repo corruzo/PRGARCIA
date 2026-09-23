@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Download, Save, Share2, TrendingUp, AlertCircle, Info } from 'lucide-react';
-import { convertirMoneda, formatearMoneda } from '../utils/calculator';
+import { convertirMoneda, formatearMoneda, generarCronograma } from '../utils/calculator';
+import { format } from 'date-fns';
 
 function Stat({ label, value, alt, highlight = false, accent = 'blue' }) {
   const colorMap = {
@@ -72,23 +73,29 @@ export function ResultPanel({ resultado, nombreCliente = '', onSaveQuote }) {
   const frecLabels = {
     diario: 'diaria', semanal: 'semanal', quincenal: 'quincenal', mensual: 'mensual',
   };
-  const hora = new Date().getHours();
-  const saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
-  const nombre = nombreCliente.trim() || 'estimado cliente';
+
+  const cronogramaLocal = resultado?.valido ? generarCronograma(resultado) : [];
+  const cuotasDetalleTexto = cronogramaLocal
+    .map(c => `• Cuota ${c.cuota} (${c.fecha}): ${fmtP(c.total)}`)
+    .join('\n');
+  const fechaHoyStr = format(new Date(), 'dd/MM/yyyy');
+  const nombre = nombreCliente.trim() || 'Estimado cliente';
+
+  const equivalenteBolivaresStr = moneda === 'USD'
+    ? `(equivalente en Bs.: ${fmtA(totalAlterna)})`
+    : `(equivalente en USD: ${fmtA(totalAlterna)})`;
 
   const whatsappMessage = encodeURIComponent(
-    `${saludo}, ${nombre}.\n\n` +
-    `Según la información solicitada, los datos de tu préstamo serían los siguientes:\n\n` +
-    `• Monto a prestar: ${fmtP(monto)}\n` +
-    `• Plazo: ${diasTotales} días\n` +
-    `• Interés: ${resultado.tasa}% ${resultado.modalidadTasa}\n` +
-    `• Interés estimado: ${fmtP(interes)}\n` +
-    `• Total a pagar: ${fmtP(totalPagar)}\n` +
-    `• Cuotas ${frecLabels[frecuenciaPago]}: desde ${fmtP(montoCuota)} hasta ${fmtP(cuotaFinal)} (${numeroCuotas} cuotas)\n` +
-    `• Tasa BCV utilizada: Bs. ${parseFloat(tasaBCV).toFixed(2)} por USD\n\n` +
-    `Antes de proceder, por favor confírmame que estás de acuerdo con el monto, el plazo, la tasa, el total a pagar y la frecuencia de las cuotas.\n\n` +
-    `Una vez confirmados estos datos, coordinamos el siguiente paso.\n\n` +
-    `Saludos,\nPRGARCIA.`
+    `Hola ${nombre}, los datos de tu solicitud de préstamo son:\n\n` +
+    `• Monto del préstamo: ${fmtP(monto)}\n` +
+    `• Plazo de pago: ${diasTotales} días\n` +
+    `• Intereses Generados: ${fmtP(interes)}\n` +
+    `• Total a cobrar: ${fmtP(totalPagar)} ${equivalenteBolivaresStr}\n\n` +
+    `*Cuotas de pago:*\n` +
+    `${cuotasDetalleTexto}\n\n` +
+    `• Tasa del dólar BCV hoy: Bs. ${parseFloat(tasaBCV).toFixed(2)}\n` +
+    `• Fecha de hoy: ${fechaHoyStr}\n\n` +
+    `*Nota:* Los montos equivalentes en Bolívares (Bs.) son volátiles por el cambio de la tasa del dólar y pueden variar según la tasa oficial del día en que se efectúe cada pago.`
   );
 
   const whatsappUrl = `https://wa.me/?text=${whatsappMessage}`;
@@ -96,7 +103,7 @@ export function ResultPanel({ resultado, nombreCliente = '', onSaveQuote }) {
   const crearImagenCotizacion = async () => {
     const canvas = document.createElement('canvas');
     canvas.width = 1080;
-    canvas.height = 1350;
+    canvas.height = 1450;
     const context = canvas.getContext('2d');
     const padding = 86;
 
@@ -108,30 +115,29 @@ export function ResultPanel({ resultado, nombreCliente = '', onSaveQuote }) {
     context.font = '700 48px Arial';
     context.fillText('PRGARCÍA', padding, 92);
     context.font = '400 28px Arial';
-    context.fillText('Cotización de préstamo', padding, 142);
+    context.fillText('Cotización de Préstamo', padding, 142);
     context.font = '400 22px Arial';
-    context.fillText(`${saludo}, ${nombre}`, padding, 190);
+    context.fillText(`Cliente: ${nombre} · ${fechaHoyStr}`, padding, 190);
 
     context.fillStyle = '#0f172a';
     context.font = '700 30px Arial';
-    context.fillText('Resumen financiero', padding, 310);
-    context.font = '400 25px Arial';
+    context.fillText('Resumen de Cotización', padding, 300);
+
     const lines = [
-      ['Monto a prestar', fmtP(monto)],
-      ['Plazo', `${diasTotales} días`],
-      ['Interés', `${resultado.tasa}% ${resultado.modalidadTasa}`],
-      ['Interés estimado', fmtP(interes)],
-      ['Total a pagar', fmtP(totalPagar)],
-      [`Cuotas ${frecLabels[frecuenciaPago]}`, `Desde ${fmtP(montoCuota)} hasta ${fmtP(cuotaFinal)}`],
-      ['Tasa BCV utilizada', `Bs. ${parseFloat(tasaBCV).toFixed(2)} por USD`],
+      ['Monto del préstamo', fmtP(monto)],
+      ['Plazo de pago', `${diasTotales} días (${numeroCuotas} cuotas)`],
+      ['Intereses Generados', fmtP(interes)],
+      ['Total a cobrar', `${fmtP(totalPagar)} (≈ ${fmtA(totalAlterna)})`],
+      ['Tasa BCV del día', `Bs. ${parseFloat(tasaBCV).toFixed(2)} por USD`],
     ];
+
     lines.forEach(([label, text], index) => {
-      const y = 375 + index * 92;
+      const y = 360 + index * 90;
       context.fillStyle = '#64748b';
       context.font = '400 22px Arial';
       context.fillText(label, padding, y);
       context.fillStyle = '#0f172a';
-      context.font = '700 28px Arial';
+      context.font = '700 26px Arial';
       context.fillText(text, padding, y + 35);
       context.strokeStyle = '#e2e8f0';
       context.beginPath();
@@ -139,10 +145,11 @@ export function ResultPanel({ resultado, nombreCliente = '', onSaveQuote }) {
       context.lineTo(canvas.width - padding, y + 55);
       context.stroke();
     });
+
     context.fillStyle = '#64748b';
     context.font = '400 20px Arial';
-    context.fillText('Antes de proceder, confirma monto, plazo, tasa y cuotas.', padding, 1065);
-    context.fillText('PRGARCIA · Soluciones de préstamo Venezuela', padding, 1250);
+    context.fillText('Nota: Los montos en Bs. cambian según la tasa oficial BCV del día del pago.', padding, 1180);
+    context.fillText('PRGARCÍA · Soluciones Financieras Venezuela', padding, 1340);
 
     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
     const file = new File([blob], 'cotizacion-prgarcia.png', { type: 'image/png' });
