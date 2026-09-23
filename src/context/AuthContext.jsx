@@ -1,183 +1,163 @@
 /**
  * AuthContext.jsx — Proveedor global de autenticación para PRGARCIA.
  *
- * Estrategia dual:
- *  1. Supabase Auth (si VITE_SUPABASE_URL + VITE_SUPABASE_PUBLISHABLE_KEY están configurados)
- *  2. Fallback localStorage (para desarrollo local sin credenciales de Supabase)
+ * BLINDAJE TOTAL:
+ *  - Supabase es la ÚNICA fuente de autenticación.
+ *  - NO existe fallback a localStorage para login ni registro.
+ *  - Sin cuenta en Supabase = sin acceso. Punto.
+ *  - El draftformulario del usuario sí se guarda en localStorage
+ *    (es solo data local de conveniencia, no auth).
  *
- * El cliente Supabase se importa desde src/utils/supabase/client.js que usa
- * @supabase/ssr > createBrowserClient — la forma recomendada para SPAs.
+ * Sistema multicuenta:
+ *  - Cualquier persona puede crear su cuenta desde la app (email + password).
+ *  - Cada usuario ve solo sus propios datos.
+ *  - onAuthStateChange escucha cambios en tiempo real (logout en otra pestaña, etc.)
  */
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase/client';
 
-const AUTH_STORAGE_KEY = 'prgarcia.auth.user.v1';
+// ─── Contexto ─────────────────────────────────────────────────────────────────
 
 const AuthContext = createContext({
-  user: null,
-  loading: true,
-  isAuthModalOpen: false,
-  authModalTab: 'login',
-  openAuthModal: () => {},
-  closeAuthModal: () => {},
-  login: async () => {},
-  register: async () => {},
-  logout: async () => {},
+  user:             null,
+  loading:          true,
+  supabaseReady:    false,
+  isAuthModalOpen:  false,
+  authModalTab:     'login',
+  openAuthModal:    () => {},
+  closeAuthModal:   () => {},
+  login:            async () => {},
+  register:         async () => {},
+  logout:           async () => {},
 });
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helper: mapear usuario de Supabase al formato interno ────────────────────
 
-/** Normaliza un usuario de Supabase al formato interno */
 function mapSupabaseUser(sbUser) {
   return {
-    id:          sbUser.id,
-    email:       sbUser.email,
-    name:        sbUser.user_metadata?.full_name || sbUser.email.split('@')[0],
-    avatarUrl:   sbUser.user_metadata?.avatar_url || null,
-    createdAt:   sbUser.created_at,
-    isSupabase:  true,
+    id:        sbUser.id,
+    email:     sbUser.email,
+    name:      sbUser.user_metadata?.full_name || sbUser.email.split('@')[0],
+    avatarUrl: sbUser.user_metadata?.avatar_url || null,
+    createdAt: sbUser.created_at,
   };
 }
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function AuthProvider({ children }) {
-  const [user, setUser]                   = useState(null);
-  const [loading, setLoading]             = useState(true);
+  const [user, setUser]                       = useState(null);
+  const [loading, setLoading]                 = useState(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authModalTab, setAuthModalTab]   = useState('login');
+  const [authModalTab, setAuthModalTab]       = useState('login');
 
-  // ── Inicialización de sesión ────────────────────────────────────────────────
+  // ── Inicialización de sesión ──────────────────────────────────────────────
+
   useEffect(() => {
-    if (supabase) {
-      // Recupera la sesión activa (si el usuario ya inició sesión antes)
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session?.user) {
-          setUser(mapSupabaseUser(session.user));
-        } else {
-          loadLocalUser();
-        }
-        setLoading(false);
-      });
-
-      // Escucha cambios de sesión en tiempo real (login, logout, token refresh)
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        if (session?.user) {
-          setUser(mapSupabaseUser(session.user));
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-          localStorage.removeItem(AUTH_STORAGE_KEY);
-        }
-        setLoading(false);
-      });
-
-      return () => subscription.unsubscribe();
+    if (!supabase) {
+      // Supabase no configurado (variables de entorno ausentes).
+      // La app arrancará pero NADIE podrá autenticarse.
+      console.error(
+        '[PRGARCIA Auth] ¡Supabase no está configurado!\n' +
+        'Agrega VITE_SUPABASE_URL y VITE_SUPABASE_PUBLISHABLE_KEY en Vercel.'
+      );
+      setLoading(false);
+      return;
     }
 
-    // Sin Supabase → modo local
-    loadLocalUser();
-    setLoading(false);
+    // Obtener sesión activa al cargar la app
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ? mapSupabaseUser(session.user) : null);
+      setLoading(false);
+    });
+
+    // Listener para cambios de sesión en tiempo real:
+    // LOGIN, LOGOUT, TOKEN_REFRESHED, etc.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ? mapSupabaseUser(session.user) : null);
+      // No cambiamos loading aquí — ya fue seteado arriba
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  // ── localStorage fallback ──────────────────────────────────────────────────
+  // ── Modal ─────────────────────────────────────────────────────────────────
 
-  const loadLocalUser = () => {
-    try {
-      const saved = localStorage.getItem(AUTH_STORAGE_KEY);
-      setUser(saved ? JSON.parse(saved) : null);
-    } catch {
-      setUser(null);
-    }
-  };
-
-  const saveLocalUser = (u) => {
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(u));
-    setUser(u);
-  };
-
-  // ── Modal helpers ──────────────────────────────────────────────────────────
-
-  const openAuthModal = (tab = 'login') => {
-    setAuthModalTab(tab);
-    setIsAuthModalOpen(true);
-  };
-
+  const openAuthModal  = (tab = 'login') => { setAuthModalTab(tab); setIsAuthModalOpen(true); };
   const closeAuthModal = () => setIsAuthModalOpen(false);
 
-  // ── Auth actions ───────────────────────────────────────────────────────────
+  // ── Login ─────────────────────────────────────────────────────────────────
 
   const login = async (email, password) => {
-    if (supabase) {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw new Error(error.message);
-      if (data.user) {
-        const u = mapSupabaseUser(data.user);
-        setUser(u);
-        closeAuthModal();
-        return u;
-      }
+    if (!supabase) {
+      throw new Error('El sistema de autenticación no está disponible. Contacta al administrador.');
     }
 
-    // Fallback: autenticación local simple
-    const localUser = {
-      id:        `usr_${Date.now()}`,
-      email,
-      name:      email.split('@')[0],
-      createdAt: new Date().toISOString(),
-      isLocal:   true,
-    };
-    saveLocalUser(localUser);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      // Traducir errores comunes de Supabase al español
+      const msg = translateSupabaseError(error.message);
+      throw new Error(msg);
+    }
+
+    // onAuthStateChange actualizará el estado automáticamente
     closeAuthModal();
-    return localUser;
+    return mapSupabaseUser(data.user);
   };
+
+  // ── Registro ──────────────────────────────────────────────────────────────
 
   const register = async (name, email, password) => {
-    if (supabase) {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { full_name: name } },
-      });
-      if (error) throw new Error(error.message);
-      if (data.user) {
-        const u = mapSupabaseUser(data.user);
-        setUser(u);
-        closeAuthModal();
-        return u;
-      }
+    if (!supabase) {
+      throw new Error('El sistema de autenticación no está disponible. Contacta al administrador.');
     }
 
-    // Fallback: registro local simple
-    const localUser = {
-      id:        `usr_${Date.now()}`,
+    const { data, error } = await supabase.auth.signUp({
       email,
-      name:      name.trim() || email.split('@')[0],
-      createdAt: new Date().toISOString(),
-      isLocal:   true,
-    };
-    saveLocalUser(localUser);
+      password,
+      options: {
+        data: { full_name: name },
+      },
+    });
+
+    if (error) {
+      const msg = translateSupabaseError(error.message);
+      throw new Error(msg);
+    }
+
+    // Si Supabase requiere confirmación de email, data.user existirá pero
+    // data.session será null. Lo manejamos:
+    if (data.user && !data.session) {
+      // Usuario creado pero pendiente de confirmar email
+      throw new Error(
+        '✉️ Cuenta creada. Revisa tu correo electrónico para confirmar tu cuenta antes de iniciar sesión.'
+      );
+    }
+
     closeAuthModal();
-    return localUser;
+    return data.user ? mapSupabaseUser(data.user) : null;
   };
+
+  // ── Logout ────────────────────────────────────────────────────────────────
 
   const logout = async () => {
     if (supabase) {
       await supabase.auth.signOut();
-      // onAuthStateChange → SIGNED_OUT → limpia user
-      return;
+      // onAuthStateChange → SIGNED_OUT → setUser(null) automáticamente
     }
-    localStorage.removeItem(AUTH_STORAGE_KEY);
     setUser(null);
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <AuthContext.Provider
       value={{
         user,
         loading,
+        supabaseReady:  Boolean(supabase),
         isAuthModalOpen,
         authModalTab,
         openAuthModal,
@@ -185,7 +165,6 @@ export function AuthProvider({ children }) {
         login,
         register,
         logout,
-        supabaseReady: Boolean(supabase),
       }}
     >
       {children}
@@ -193,6 +172,38 @@ export function AuthProvider({ children }) {
   );
 }
 
+// ─── Hook ─────────────────────────────────────────────────────────────────────
+
 export function useAuth() {
   return useContext(AuthContext);
+}
+
+// ─── Utilidad: traducción de errores de Supabase ──────────────────────────────
+
+function translateSupabaseError(message = '') {
+  const m = message.toLowerCase();
+
+  if (m.includes('invalid login credentials') || m.includes('invalid credentials'))
+    return 'Correo o contraseña incorrectos. Verifica tus datos e intenta de nuevo.';
+
+  if (m.includes('email not confirmed'))
+    return 'Tu cuenta aún no ha sido confirmada. Revisa tu correo electrónico.';
+
+  if (m.includes('user already registered') || m.includes('already been registered'))
+    return 'Este correo ya tiene una cuenta registrada. Intenta iniciar sesión.';
+
+  if (m.includes('password should be at least'))
+    return 'La contraseña debe tener al menos 6 caracteres.';
+
+  if (m.includes('rate limit') || m.includes('too many requests'))
+    return 'Demasiados intentos. Espera un momento antes de intentar de nuevo.';
+
+  if (m.includes('network') || m.includes('fetch'))
+    return 'Error de conexión. Verifica tu internet e intenta de nuevo.';
+
+  if (m.includes('signup is disabled'))
+    return 'El registro de nuevas cuentas está deshabilitado. Contacta al administrador.';
+
+  // Devolver el mensaje original si no hay traducción
+  return message;
 }
