@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="PRGARCIA icon">
+  <defs>
+    <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="40" fill="url(#g1)"/>
+  <circle cx="96" cy="96" r="64" fill="#f8fafc" fill-opacity="0.12"/>
+  <path d="M60 132V60h27c22 0 34 11 34 29 0 19-13 31-35 31H87v12H60zm27-18h8c12 0 19-6 19-16s-7-16-19-16h-8v32z" fill="#f8fafc"/>
+  <path d="M112 127h20L96 67h-20l36 60z" fill="#fbbf24"/>
+</svg>
