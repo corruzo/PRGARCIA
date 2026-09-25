@@ -1,46 +1,51 @@
 /**
  * src/utils/supabase/client.js
  *
- * Supabase browser client para Vite + React SPA.
- * Usa @supabase/ssr createBrowserClient que maneja la sesión y cookies
- * de forma correcta en el navegador (y es compatible con SSR si en el
- * futuro se migra a un framework con servidor).
+ * Cliente Supabase para Vite + React SPA.
+ * Compatible con:
+ *   - anon key  (eyJ...)              — formato clásico @supabase/supabase-js
+ *   - publishable key (sb_publishable_...) — nuevo formato Supabase v2
  *
- * Variables de entorno esperadas (en .env.local o en Vercel Dashboard):
- *   VITE_SUPABASE_URL              → Project URL (https://xxx.supabase.co)
- *   VITE_SUPABASE_PUBLISHABLE_KEY  → Publishable Key (sb_publishable_...)
- *
- * NOTA: En una SPA de Vite NO existe "server client" ni "middleware".
- * Solo necesitamos createBrowserClient.
+ * Variables de entorno (en .env.local local o en Vercel Dashboard):
+ *   VITE_SUPABASE_URL             → https://xxx.supabase.co
+ *   VITE_SUPABASE_ANON_KEY        → eyJ...  ← usa esta (anon public key)
+ *   VITE_SUPABASE_PUBLISHABLE_KEY → sb_publishable_... (alternativa)
  */
 
-import { createBrowserClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-  || import.meta.env.VITE_SUPABASE_ANON_KEY; // compatibilidad con key anterior
 
-if (!supabaseUrl || !supabaseKey) {
-  console.warn(
-    '[Supabase] Variables de entorno no encontradas.\n' +
-    'Crea un archivo .env.local con:\n' +
-    '  VITE_SUPABASE_URL=...\n' +
-    '  VITE_SUPABASE_PUBLISHABLE_KEY=...\n' +
-    'La app funcionará en modo local (sin Supabase).'
+// Acepta ambos nombres de variable, prioriza ANON_KEY (formato clásico)
+const supabaseKey =
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+if (!supabaseUrl) {
+  console.error(
+    '[PRGARCIA] ⚠️ Falta VITE_SUPABASE_URL en las variables de entorno.\n' +
+    'Agrégala en Vercel → Settings → Environment Variables.'
+  );
+}
+if (!supabaseKey) {
+  console.error(
+    '[PRGARCIA] ⚠️ Falta VITE_SUPABASE_ANON_KEY en las variables de entorno.\n' +
+    'Ve a Supabase → Settings → API → "anon public" y agrégala en Vercel.'
   );
 }
 
 /**
- * Cliente Supabase singleton para el navegador.
- * Retorna null si las variables de entorno no están configuradas.
+ * Cliente Supabase singleton.
+ * Null si las variables no están configuradas (la app sigue cargando,
+ * pero el AuthContext bloqueará el acceso con un aviso claro).
  *
- * Opciones de sesión:
- *  - persistSession: true  → Guarda la sesión en localStorage (como WhatsApp/Instagram)
- *  - detectSessionInUrl: true → Maneja redirect de confirmación de email / OAuth
- *  - autoRefreshToken: true   → Renueva el token automáticamente antes de expirar
+ * Opciones de sesión estilo red social:
+ *  - persistSession: true    → Sesión guardada en localStorage (no expira al cerrar)
+ *  - autoRefreshToken: true  → Renueva el token automáticamente antes de vencer
+ *  - detectSessionInUrl: true → Captura redirects de confirmación de email
  */
 export const supabase = supabaseUrl && supabaseKey
-  ? createBrowserClient(supabaseUrl, supabaseKey, {
+  ? createClient(supabaseUrl, supabaseKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
