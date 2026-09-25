@@ -33,9 +33,21 @@ if (!supabaseUrl || !supabaseKey) {
 /**
  * Cliente Supabase singleton para el navegador.
  * Retorna null si las variables de entorno no están configuradas.
+ *
+ * Opciones de sesión:
+ *  - persistSession: true  → Guarda la sesión en localStorage (como WhatsApp/Instagram)
+ *  - detectSessionInUrl: true → Maneja redirect de confirmación de email / OAuth
+ *  - autoRefreshToken: true   → Renueva el token automáticamente antes de expirar
  */
 export const supabase = supabaseUrl && supabaseKey
-  ? createBrowserClient(supabaseUrl, supabaseKey)
+  ? createBrowserClient(supabaseUrl, supabaseKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storageKey: 'prgarcia-auth',
+      },
+    })
   : null;
 
 export default supabase;

@@ -33,15 +33,15 @@ export function WelcomeLanding() {
             <button
               type="button"
               onClick={() => openAuthModal('login')}
-              className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/90 px-3.5 text-xs font-bold text-gray-700 dark:text-gray-200 hover:border-brand-500/50 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all active:scale-95 shadow-sm"
+              className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/90 px-3.5 text-xs font-bold text-gray-700 dark:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all active:scale-95 shadow-sm"
             >
-              <LogIn size={14} className="text-brand-600 dark:text-brand-400" />
-              <span>Ingresar</span>
+              <LogIn size={14} className="text-gray-700 dark:text-gray-300" />
+              <span>Entrar</span>
             </button>
             <button
               type="button"
               onClick={() => openAuthModal('register')}
-              className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 px-3.5 text-xs font-bold text-white shadow-md shadow-brand-600/20 transition-all active:scale-95"
+              className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl bg-gray-900 dark:bg-white hover:bg-black dark:hover:bg-gray-100 px-3.5 text-xs font-bold text-white dark:text-black shadow-sm transition-all active:scale-95"
             >
               <UserPlus size={14} />
               <span className="hidden sm:inline">Crear Cuenta</span>
@@ -52,12 +52,12 @@ export function WelcomeLanding() {
 
       {/* Hero Principal */}
       <main className="mx-auto max-w-5xl px-4 py-12 lg:py-16 flex-1 flex flex-col items-center justify-center text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-50/70 dark:bg-brand-950/40 px-4 py-1.5 text-xs font-bold text-brand-700 dark:text-brand-300 backdrop-blur mb-6 animate-fade-in">
-          <Shield size={14} /> Acceso Exclusivo para Usuarios Registrados
+        <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 dark:border-gray-800 bg-gray-100/50 dark:bg-gray-900/50 px-4 py-1.5 text-xs font-bold text-gray-700 dark:text-gray-300 mb-6">
+          <Shield size={14} /> Entorno Seguro y Privado
         </div>
 
         <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 dark:text-white max-w-4xl leading-tight">
-          Calculadora de Préstamos e Intereses Simple para <span className="currency-accent">Venezuela</span>
+          Cálculos Financieros Exactos para Venezuela
         </h1>
 
         <p className="mt-4 text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-2xl font-normal leading-relaxed">
@@ -69,51 +69,51 @@ export function WelcomeLanding() {
           <button
             type="button"
             onClick={() => openAuthModal('login')}
-            className="w-full sm:w-auto flex min-h-12 items-center justify-center gap-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 px-7 py-3 text-sm font-bold text-white shadow-lg shadow-brand-600/25 transition-all duration-200 hover:-translate-y-0.5 active:scale-95"
+            className="w-full sm:w-auto flex min-h-12 items-center justify-center gap-2.5 rounded-xl bg-gray-900 dark:bg-white hover:bg-black dark:hover:bg-gray-100 px-7 py-3 text-sm font-bold text-white dark:text-black shadow-sm transition-all duration-200 active:scale-95"
           >
             <LogIn size={18} />
-            <span>Iniciar Sesión para Usar</span>
+            <span>Iniciar Sesión</span>
           </button>
 
           <button
             type="button"
             onClick={() => openAuthModal('register')}
-            className="w-full sm:w-auto flex min-h-12 items-center justify-center gap-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/90 dark:bg-gray-900/90 px-7 py-3 text-sm font-bold text-gray-800 dark:text-gray-200 shadow-sm transition-all duration-200 hover:border-brand-500/50 hover:bg-gray-50 dark:hover:bg-gray-800 active:scale-95"
+            className="w-full sm:w-auto flex min-h-12 items-center justify-center gap-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/90 dark:bg-gray-900/90 px-7 py-3 text-sm font-bold text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 active:scale-95 transition-all duration-200"
           >
-            <UserPlus size={18} className="text-brand-600 dark:text-brand-400" />
+            <UserPlus size={18} className="text-gray-500" />
             <span>Registrarme Gratis</span>
           </button>
         </div>
 
         {/* Tarjetas de Beneficios */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-14 w-full text-left">
-          <div className="rounded-2xl border border-gray-200/80 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 p-5 shadow-sm backdrop-blur">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-brand-600 dark:text-brand-400 mb-3">
+          <div className="rounded-2xl border border-gray-200/50 dark:border-gray-800 bg-white dark:bg-gray-900/50 p-5 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 mb-3">
               <Zap size={20} />
             </div>
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Cálculo Día a Día</h3>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Matemática Exacta</h3>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-              Cobra exactamente los días devengados sin redondeos forzados. Ni tú ni tu cliente pierden.
+              Cálculo por días reales devengados, eliminando redondeos e inconsistencias financieras.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-gray-200/80 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 p-5 shadow-sm backdrop-blur">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 mb-3">
+          <div className="rounded-2xl border border-gray-200/50 dark:border-gray-800 bg-white dark:bg-gray-900/50 p-5 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 mb-3">
               <DollarSign size={20} />
             </div>
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Bimoneda USD / VES</h3>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Multimoneda (USD/VES)</h3>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-              Conversión automática a la tasa del Banco Central de Venezuela (BCV) en tiempo real.
+              Conversión anclada a la tasa oficial del BCV para cobro de cuotas con protección cambiaria.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-gray-200/80 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 p-5 shadow-sm backdrop-blur">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 mb-3">
+          <div className="rounded-2xl border border-gray-200/50 dark:border-gray-800 bg-white dark:bg-gray-900/50 p-5 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 mb-3">
               <CheckCircle2 size={20} />
             </div>
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Cotizaciones Listas</h3>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Reportes Listos</h3>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-              Genera imágenes descargables y mensajes formateados para compartir por WhatsApp en 1-clic.
+              Genera resúmenes claros y listos para enviar directo a tu cliente a través de WhatsApp.
             </p>
           </div>
         </div>
