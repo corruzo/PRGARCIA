@@ -31,7 +31,7 @@ function Divider({ label }) {
   );
 }
 
-export function ResultPanel({ resultado, nombreCliente = '', onSaveQuote }) {
+export function ResultPanel({ resultado, nombreCliente = '', onSaveQuote, tasaBCVPersonalizada = false }) {
   const [imagenPreparada, setImagenPreparada] = useState(false);
   const [cotizacionGuardada, setCotizacionGuardada] = useState(false);
   if (!resultado) {
@@ -70,6 +70,12 @@ export function ResultPanel({ resultado, nombreCliente = '', onSaveQuote }) {
   const fmtA  = (v) => formatearMoneda(v, monedaAlterna);
   const fmtConverted = (v, from, to) => formatearMoneda(convertirMoneda(v, tasaBCV, from, to), to);
   const pct   = rendimientoPorcentaje.toFixed(2);
+  // Etiqueta de la tasa según su origen
+  const etiquetaTasa = tasaBCVPersonalizada ? 'Tasa personalizada' : 'Tasa BCV';
+  const notaTasa = tasaBCVPersonalizada
+    ? `⚠️ Esta tasa fue modificada manualmente y NO corresponde a la tasa oficial del BCV.`
+    : `Tasa oficial del BCV al momento de la cotización.`;
+
   const frecLabels = {
     diario: 'diaria', semanal: 'semanal', quincenal: 'quincenal', mensual: 'mensual',
   };
@@ -109,7 +115,8 @@ export function ResultPanel({ resultado, nombreCliente = '', onSaveQuote }) {
     `• Total a cobrar: ${fmtP(totalPagar)} ${equivalenteBolivaresStr}\n\n` +
     `*Cuotas de pago (base en USD):*\n` +
     `${cuotasDetalleTexto}\n\n` +
-    `• Tasa del dólar BCV hoy: Bs. ${parseFloat(tasaBCV).toFixed(2)}\n` +
+    `• ${etiquetaTasa} usada: Bs. ${parseFloat(tasaBCV).toFixed(2)}\n` +
+    (tasaBCVPersonalizada ? `• ⚠️ Nota: La tasa usada fue modificada manualmente, NO es la tasa oficial BCV del día.\n` : '') +
     `• Fecha de hoy: ${fechaHoyStr}\n\n` +
     `${notaIndexacion}`
   );
@@ -144,7 +151,7 @@ export function ResultPanel({ resultado, nombreCliente = '', onSaveQuote }) {
       ['Plazo de pago', `${diasTotales} días (${numeroCuotas} cuotas)`],
       ['Intereses Generados', fmtP(interes)],
       ['Total a cobrar', `${fmtP(totalPagar)} (≈ ${fmtA(totalAlterna)})`],
-      ['Tasa BCV del día', `Bs. ${parseFloat(tasaBCV).toFixed(2)} por USD`],
+      [etiquetaTasa, `Bs. ${parseFloat(tasaBCV).toFixed(2)} por USD`],
     ];
 
     lines.forEach(([label, text], index) => {
@@ -164,7 +171,10 @@ export function ResultPanel({ resultado, nombreCliente = '', onSaveQuote }) {
 
     context.fillStyle = '#64748b';
     context.font = '400 20px Arial';
-    context.fillText('Nota: Los montos en Bs. cambian según la tasa oficial BCV del día del pago.', padding, 1180);
+    const notaImagen = tasaBCVPersonalizada
+      ? `Tasa usada: Bs. ${parseFloat(tasaBCV).toFixed(2)} (personalizada, no es la tasa oficial BCV).`
+      : `Nota: Los montos en Bs. cambian según la tasa oficial BCV del día del pago.`;
+    context.fillText(notaImagen, padding, 1180);
     context.fillText('PRGARCÍA · Soluciones Financieras Venezuela', padding, 1340);
 
     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
@@ -201,8 +211,15 @@ export function ResultPanel({ resultado, nombreCliente = '', onSaveQuote }) {
         <div className="flex items-start gap-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
           <Info size={13} className="text-gray-600 dark:text-gray-400 mt-0.5 shrink-0" />
           <p className="text-xs text-gray-800 dark:text-gray-300 leading-relaxed">
-            <strong>Préstamo en USD:</strong> Se presta y se paga el capital en dólares. 
-            Los intereses en Bs. se calculan a la tasa BCV (hoy: <span className="font-mono">Bs. {parseFloat(tasaBCV).toFixed(2)}</span>).
+            <strong>Préstamo en USD:</strong> Se presta y se paga el capital en dólares.
+            Los intereses en Bs. se calculan a la{' '}
+            <strong>{tasaBCVPersonalizada ? 'tasa personalizada' : 'tasa BCV'}</strong>{' '}
+            (hoy: <span className="font-mono">Bs. {parseFloat(tasaBCV).toFixed(2)}</span>).
+            {tasaBCVPersonalizada && (
+              <span className="block mt-1 text-amber-700 dark:text-amber-400 font-medium">
+                ⚠️ Esta tasa fue modificada manualmente — no es la tasa oficial del BCV.
+              </span>
+            )}
           </p>
         </div>
       )}
@@ -211,7 +228,14 @@ export function ResultPanel({ resultado, nombreCliente = '', onSaveQuote }) {
         <div className="flex items-start gap-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
           <Info size={13} className="text-gray-600 dark:text-gray-400 mt-0.5 shrink-0" />
           <p className="text-xs text-gray-800 dark:text-gray-300 leading-relaxed">
-            <strong>Protección cambiaria:</strong> Las cuotas se anclan a su equivalente en dólares (<span className="font-mono">{formatearMoneda(cuotaAlterna, 'USD')} USD</span>) a la tasa BCV del día (hoy: <span className="font-mono">Bs. {parseFloat(tasaBCV).toFixed(2)}</span>) para proteger el valor.
+            <strong>Protección cambiaria:</strong> Las cuotas se anclan a su equivalente en dólares (<span className="font-mono">{formatearMoneda(cuotaAlterna, 'USD')} USD</span>) a la{' '}
+            <strong>{tasaBCVPersonalizada ? 'tasa personalizada' : 'tasa BCV del día'}</strong>{' '}
+            (<span className="font-mono">Bs. {parseFloat(tasaBCV).toFixed(2)}</span>).
+            {tasaBCVPersonalizada && (
+              <span className="block mt-1 text-amber-700 dark:text-amber-400 font-medium">
+                ⚠️ Esta tasa fue modificada manualmente — no es la tasa oficial del BCV.
+              </span>
+            )}
           </p>
         </div>
       )}

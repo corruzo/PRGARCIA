@@ -11,6 +11,7 @@ import { SavedQuotesView } from './components/SavedQuotesView';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { simularPrestamo, generarCronograma } from './utils/calculator';
 import { supabase } from './utils/supabase/client';
+import { getCachedBCV } from './services/bcvService';
 
 const HOY = format(new Date(), 'yyyy-MM-dd');
 const DEFAULTS = {
@@ -115,6 +116,15 @@ function AppContent() {
       tasaBCV: parseFloat(tasaBCV) || 0,
     });
   }, [values]);
+
+  // Detectar si la tasa fue modificada manualmente respecto a la tasa oficial del BCV
+  const tasaBCVPersonalizada = useMemo(() => {
+    const valorCampo = parseFloat(values.tasaBCV);
+    if (!valorCampo || valorCampo <= 0) return false;
+    const cached = getCachedBCV();
+    if (!cached?.rate) return false;
+    return Math.abs(valorCampo - cached.rate) > 0.01;
+  }, [values.tasaBCV]);
 
   const cronograma = useMemo(() => generarCronograma(resultado), [resultado]);
 
@@ -232,7 +242,7 @@ function AppContent() {
                       <div className="lg:hidden mb-4">
                         <h2 className="text-base font-bold text-gray-900 dark:text-white">Resumen</h2>
                       </div>
-                      <ResultPanel resultado={resultado} nombreCliente={values.nombreCliente} onSaveQuote={guardarCotizacion} />
+                      <ResultPanel resultado={resultado} nombreCliente={values.nombreCliente} onSaveQuote={guardarCotizacion} tasaBCVPersonalizada={tasaBCVPersonalizada} />
                     </div>
                   </>
                 ) : (
