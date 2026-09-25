@@ -64,16 +64,19 @@ export function LoanForm({ values, onChange }) {
 
         <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100 dark:border-gray-700/50">
           <span className="text-gray-600 dark:text-gray-400 text-sm font-medium">Monto</span>
-          <div className="flex items-center gap-1">
-            <span className="text-gray-400 font-medium">{values.moneda === 'USD' ? '$' : 'Bs.'}</span>
-            <input
-              type="number"
-              inputMode="decimal"
-              placeholder="0.00"
-              value={values.monto}
-              onChange={set('monto')}
-              className="w-24 text-right bg-transparent text-lg font-bold focus:outline-none text-gray-900 dark:text-white"
-            />
+          <div className="flex items-center gap-1 group">
+            <span className="text-gray-400 font-medium group-focus-within:text-gray-600 dark:group-focus-within:text-gray-300 transition-colors">{values.moneda === 'USD' ? '$' : 'Bs.'}</span>
+            <div className="relative">
+              <input
+                type="number"
+                inputMode="decimal"
+                placeholder="0.00"
+                value={values.monto}
+                onChange={set('monto')}
+                className="w-24 text-right bg-transparent text-lg font-bold focus:outline-none text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600 peer"
+              />
+              <span className="absolute bottom-0 left-0 right-0 h-px bg-gray-200 dark:bg-gray-700 peer-focus:bg-gray-500 dark:peer-focus:bg-gray-400 transition-colors duration-150" />
+            </div>
           </div>
         </div>
 
@@ -97,31 +100,37 @@ export function LoanForm({ values, onChange }) {
           
           <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100 dark:border-gray-700/50">
             <span className="text-gray-600 dark:text-gray-400 text-sm font-medium">Tasa de interés</span>
-            <div className="flex items-center gap-1">
-              <input
-                type="number"
-                inputMode="decimal"
-                placeholder="0.00"
-                value={values.tasa}
-                onChange={set('tasa')}
-                className="w-16 text-right bg-transparent text-lg font-bold focus:outline-none text-brand-600 dark:text-white"
-              />
+            <div className="flex items-center gap-1 group">
+              <div className="relative">
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  placeholder="0.00"
+                  value={values.tasa}
+                  onChange={set('tasa')}
+                  className="w-16 text-right bg-transparent text-lg font-bold focus:outline-none text-brand-600 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600 peer"
+                />
+                <span className="absolute bottom-0 left-0 right-0 h-px bg-gray-200 dark:bg-gray-700 peer-focus:bg-gray-500 dark:peer-focus:bg-gray-400 transition-colors duration-150" />
+              </div>
               <span className="text-gray-400 font-medium">%</span>
             </div>
           </div>
           
           <div className="px-4 py-3 flex items-center justify-between">
             <span className="text-gray-600 dark:text-gray-400 text-sm font-medium">Modalidad</span>
-            <select
-              value={values.modalidadTasa}
-              onChange={set('modalidadTasa')}
-              className="bg-transparent text-sm font-medium text-right focus:outline-none text-gray-900 dark:text-white cursor-pointer"
-              dir="rtl"
-            >
-              {MODALIDADES.map(m => (
-                <option key={m.value} value={m.value}>{m.label}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={values.modalidadTasa}
+                onChange={set('modalidadTasa')}
+                className="bg-transparent text-sm font-medium text-right focus:outline-none text-gray-900 dark:text-white cursor-pointer pr-1 peer appearance-none"
+                dir="rtl"
+              >
+                {MODALIDADES.map(m => (
+                  <option key={m.value} value={m.value}>{m.label}</option>
+                ))}
+              </select>
+              <span className="absolute bottom-0 left-0 right-0 h-px bg-gray-200 dark:bg-gray-700 peer-focus:bg-gray-500 dark:peer-focus:bg-gray-400 transition-colors duration-150" />
+            </div>
           </div>
         </div>
       )}
@@ -159,23 +168,29 @@ export function LoanForm({ values, onChange }) {
 
           <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100 dark:border-gray-700/50">
             <span className="text-gray-600 dark:text-gray-400 text-sm font-medium">Fecha de emisión</span>
-            <input
-              type="date"
-              value={values.fechaInicio}
-              onChange={set('fechaInicio')}
-              className="bg-transparent text-sm font-medium text-right focus:outline-none text-gray-900 dark:text-white"
-            />
+            <div className="relative">
+              <input
+                type="date"
+                value={values.fechaInicio}
+                onChange={set('fechaInicio')}
+                className="bg-transparent text-sm font-medium text-right focus:outline-none text-gray-900 dark:text-white peer"
+              />
+              <span className="absolute bottom-0 left-0 right-0 h-px bg-gray-200 dark:bg-gray-700 peer-focus:bg-gray-500 dark:peer-focus:bg-gray-400 transition-colors duration-150" />
+            </div>
           </div>
           
           <div className="px-4 py-3 flex items-center justify-between">
             <span className="text-gray-600 dark:text-gray-400 text-sm font-medium">Fecha de vencimiento</span>
-            <input
-              type="date"
-              value={values.fechaFin}
-              onChange={set('fechaFin')}
-              min={values.fechaInicio}
-              className="bg-transparent text-sm font-medium text-right focus:outline-none text-gray-900 dark:text-white"
-            />
+            <div className="relative">
+              <input
+                type="date"
+                value={values.fechaFin}
+                onChange={set('fechaFin')}
+                min={values.fechaInicio}
+                className="bg-transparent text-sm font-medium text-right focus:outline-none text-gray-900 dark:text-white peer"
+              />
+              <span className="absolute bottom-0 left-0 right-0 h-px bg-gray-200 dark:bg-gray-700 peer-focus:bg-gray-500 dark:peer-focus:bg-gray-400 transition-colors duration-150" />
+            </div>
           </div>
         </div>
       )}
@@ -189,14 +204,15 @@ export function LoanForm({ values, onChange }) {
               <span className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-widest">Cliente</span>
             </div>
           </div>
-          <div className="px-4 py-3">
+          <div className="px-4 py-3 relative">
             <input
               type="text"
               placeholder="Nombre completo del deudor"
               value={values.nombreCliente}
               onChange={set('nombreCliente')}
-              className="w-full bg-transparent text-base focus:outline-none text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 font-medium"
+              className="w-full bg-transparent text-base focus:outline-none text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600 font-medium pb-1 peer"
             />
+            <span className="absolute bottom-3 left-4 right-4 h-px bg-gray-200 dark:bg-gray-700 peer-focus:bg-gray-500 dark:peer-focus:bg-gray-400 transition-colors duration-150" />
           </div>
         </div>
       )}
