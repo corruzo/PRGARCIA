@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { AlertCircle, CheckCircle2, Clock3, PencilLine, RefreshCw } from 'lucide-react';
 import { useBCV } from '../hooks/useBCV';
+import { formatRateString } from '../services/bcvService';
 import { NoticeModal } from './NoticeModal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -24,14 +25,14 @@ export function BCVField({ value, onChange }) {
   useEffect(() => {
     if (!tasaInicialAplicada.current && !value && tasa) {
       tasaInicialAplicada.current = true;
-      onChange(Number(tasa).toFixed(2));
+      onChange(formatRateString(tasa));
     }
   }, [onChange, tasa, value]);
 
   const handleConsultar = async () => {
     const res = await consultarBCV({ force: true });
     if (res.ok) {
-      onChange(res.tasa.toFixed(2));
+      onChange(formatRateString(res.tasa));
       return;
     }
 
@@ -67,8 +68,8 @@ export function BCVField({ value, onChange }) {
             type="number"
             inputMode="decimal"
             min="0"
-            step="0.01"
-            placeholder="Ej: 39.50"
+            step="any"
+            placeholder="Ej: 855.66"
             value={value}
             onChange={e => onChange(e.target.value)}
             className="input-base pl-9 font-mono"

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   BCV_CACHE_KEY,
   fetchBCVRate,
+  formatRateString,
   getCachedBCV,
   saveBCVCache,
 } from '../services/bcvService';
@@ -30,7 +31,7 @@ export function useBCV() {
     if (!force) {
       const cached = getCachedBCV();
       if (cached) {
-        setTasa(cached.rate.toFixed(2));
+        setTasa(formatRateString(cached.rate));
         setFuente(cached.source || 'caché local');
         setUltima(new Date(cached.fetchedAt));
         setTasaAnticuada(Boolean(cached.stale));
@@ -52,7 +53,7 @@ export function useBCV() {
       );
       const nextDate = new Date(persisted?.fetchedAt || Date.now());
 
-      setTasa(live.tasa.toFixed(2));
+      setTasa(formatRateString(live.tasa));
       setFuente(live.fuente);
       setUltima(nextDate);
       setTasaAnticuada(Boolean(live.stale));
@@ -80,7 +81,7 @@ export function useBCV() {
 
     const cachedFallback = getCachedBCV();
     if (cachedFallback) {
-      setTasa(cachedFallback.rate.toFixed(2));
+      setTasa(formatRateString(cachedFallback.rate));
       setFuente(cachedFallback.source || 'caché local');
       setUltima(new Date(cachedFallback.fetchedAt));
       setTasaAnticuada(true);
@@ -110,7 +111,7 @@ export function useBCV() {
   useEffect(() => {
     const cached = getCachedBCV();
     if (cached) {
-      setTasa(cached.rate.toFixed(2));
+      setTasa(formatRateString(cached.rate));
       setFuente(cached.source || 'caché local');
       setUltima(new Date(cached.fetchedAt));
       setTasaAnticuada(Boolean(cached.stale));

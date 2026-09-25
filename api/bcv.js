@@ -2,9 +2,9 @@
  * api/bcv.js — Función serverless para obtener la tasa BCV oficial.
  *
  * Estrategia en cascada:
- *   1. ve.dolarapi.com    — API abierta dedicada a Venezuela con tasa oficial BCV
- *   2. open.er-api.com    — API global de tasas de cambio (USD a VES)
- *   3. exchangerate-api   — API alternativa (v4)
+ *   1. open.er-api.com    — API en tiempo real sincronizada al instante con el BCV (tasa exacta)
+ *   2. exchangerate-api   — API v4 de respaldo
+ *   3. ve.dolarapi.com    — API alternativa para Venezuela
  *   4. bcv.org.ve         — Scraping directo como último recurso
  */
 
@@ -12,20 +12,8 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
-  'Cache-Control': 's-maxage=300, stale-while-revalidate=600',
+  'Cache-Control': 's-maxage=120, stale-while-revalidate=300',
 };
-
-async function fetchFromDolarApi() {
-  const res = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', {
-    headers: { Accept: 'application/json' },
-    signal: AbortSignal.timeout(6000),
-  });
-  if (!res.ok) throw new Error(`dolarapi HTTP ${res.status}`);
-  const data = await res.json();
-  const price = data?.promedio;
-  if (!price || price <= 0) throw new Error('dolarapi: tasa inválida');
-  return { value: Number(price), source: 'dolarapi.com (BCV Oficial)' };
-}
 
 async function fetchFromOpenER() {
   const res = await fetch('https://open.er-api.com/v6/latest/USD', {
@@ -49,6 +37,18 @@ async function fetchFromExchangeRateV4() {
   const rate = data?.rates?.VES;
   if (!rate || rate <= 0) throw new Error('exchangerate-v4: tasa inválida');
   return { value: Number(rate), source: 'exchangerate-api.com' };
+}
+
+async function fetchFromDolarApi() {
+  const res = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', {
+    headers: { Accept: 'application/json' },
+    signal: AbortSignal.timeout(6000),
+  });
+  if (!res.ok) throw new Error(`dolarapi HTTP ${res.status}`);
+  const data = await res.json();
+  const price = data?.promedio;
+  if (!price || price <= 0) throw new Error('dolarapi: tasa inválida');
+  return { value: Number(price), source: 'dolarapi.com (BCV Oficial)' };
 }
 
 async function fetchFromBCVdirect() {
@@ -85,9 +85,9 @@ export default async function handler(req, res) {
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
 
   const strategies = [
-    { name: 'dolarapi', fn: fetchFromDolarApi },
     { name: 'open-er', fn: fetchFromOpenER },
     { name: 'exchangerate-v4', fn: fetchFromExchangeRateV4 },
+    { name: 'dolarapi', fn: fetchFromDolarApi },
     { name: 'bcv-direct', fn: fetchFromBCVdirect },
   ];
 

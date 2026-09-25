@@ -18,23 +18,23 @@ export const BCV_ENDPOINTS = [
     },
   },
   {
+    nombre: 'Open Exchange Rates (BCV)',
+    url: 'https://open.er-api.com/v6/latest/USD',
+    parsear: (payload) => {
+      if (!payload) return 0;
+      if (typeof payload === 'object' && payload.rates) {
+        return Number(payload.rates.VES || 0);
+      }
+      return 0;
+    },
+  },
+  {
     nombre: 'DolarApi Venezuela',
     url: 'https://ve.dolarapi.com/v1/dolares/oficial',
     parsear: (payload) => {
       if (!payload) return 0;
       if (typeof payload === 'object') {
         return Number(payload.promedio || payload.price || payload.tasa || 0);
-      }
-      return 0;
-    },
-  },
-  {
-    nombre: 'Open Exchange Rates',
-    url: 'https://open.er-api.com/v6/latest/USD',
-    parsear: (payload) => {
-      if (!payload) return 0;
-      if (typeof payload === 'object' && payload.rates) {
-        return Number(payload.rates.VES || 0);
       }
       return 0;
     },
@@ -128,4 +128,14 @@ export async function fetchBCVRate() {
   }
 
   return { ok: false, error: 'No se pudo obtener la tasa BCV.' };
+}
+
+export function formatRateString(val) {
+  if (!val || isNaN(val)) return '';
+  const num = Number(val);
+  const str = num.toString();
+  const parts = str.split('.');
+  if (parts.length === 1) return num.toFixed(2);
+  if (parts[1].length < 2) return num.toFixed(2);
+  return str;
 }
