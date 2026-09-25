@@ -56,8 +56,38 @@ export function extractBCVDollarRate(html) {
 }
 
 export async function fetchOfficialBCVRate() {
-  let html;
+  // 1. DolarApi Venezuela (tasa oficial BCV en tiempo real)
+  try {
+    const res = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', {
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const val = Number(data?.promedio);
+      if (val > 0) return { rate: val, source: 'DolarApi (BCV Oficial)' };
+    }
+  } catch (err) {
+    console.warn('[server/bcv] Falló DolarApi:', err.message);
+  }
 
+  // 2. Open Exchange Rates
+  try {
+    const res = await fetch('https://open.er-api.com/v6/latest/USD', {
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const val = Number(data?.rates?.VES);
+      if (val > 0) return { rate: val, source: 'Open Exchange Rates' };
+    }
+  } catch (err) {
+    console.warn('[server/bcv] Falló OpenER:', err.message);
+  }
+
+  // 3. Scraping directo de la web oficial del BCV (último recurso)
+  let html;
   try {
     const response = await fetch('https://www.bcv.org.ve/', {
       headers: {
@@ -78,7 +108,7 @@ export async function fetchOfficialBCVRate() {
 
   const rate = extractBCVDollarRate(html);
   if (!rate) {
-    throw new Error('No se encontró la tasa USD en la página oficial del BCV');
+    throw new Error('No se encontró la tasa USD en ninguna de las fuentes');
   }
 
   return { rate, source: 'BCV Oficial' };

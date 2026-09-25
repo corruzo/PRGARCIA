@@ -6,17 +6,36 @@ export const BCV_ENDPOINTS = [
     url: '/api/bcv',
     parsear: (payload) => {
       if (!payload) return 0;
-
       if (typeof payload === 'object') {
-        return Number(payload.value || payload.tasa || 0);
+        return Number(payload.value || payload.tasa || payload.promedio || 0);
       }
-
       if (typeof payload === 'string') {
         const match = payload.match(/<div[^>]*id=['"]dolar['"][^>]*>[\s\S]*?<strong[^>]*>(.*?)<\/strong>/i);
         const raw = match?.[1]?.replace(/[^0-9,.-]/g, '').replace(',', '.');
         return Number(raw || 0);
       }
-
+      return 0;
+    },
+  },
+  {
+    nombre: 'DolarApi Venezuela',
+    url: 'https://ve.dolarapi.com/v1/dolares/oficial',
+    parsear: (payload) => {
+      if (!payload) return 0;
+      if (typeof payload === 'object') {
+        return Number(payload.promedio || payload.price || payload.tasa || 0);
+      }
+      return 0;
+    },
+  },
+  {
+    nombre: 'Open Exchange Rates',
+    url: 'https://open.er-api.com/v6/latest/USD',
+    parsear: (payload) => {
+      if (!payload) return 0;
+      if (typeof payload === 'object' && payload.rates) {
+        return Number(payload.rates.VES || 0);
+      }
       return 0;
     },
   },

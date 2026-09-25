@@ -2,11 +2,10 @@
  * api/bcv.js — Función serverless para obtener la tasa BCV oficial.
  *
  * Estrategia en cascada:
- *   1. pydolarve.org  — API pública con datos del BCV en tiempo real (JSON limpio)
- *   2. exchangedna.com — Respaldo adicional
- *   3. bcv.org.ve     — Scraping directo como último recurso
- *
- * Si todas fallan, devuelve error 503 para que el cliente use su caché local.
+ *   1. ve.dolarapi.com    — API abierta dedicada a Venezuela con tasa oficial BCV
+ *   2. open.er-api.com    — API global de tasas de cambio (USD a VES)
+ *   3. exchangerate-api   — API alternativa (v4)
+ *   4. bcv.org.ve         — Scraping directo como último recurso
  */
 
 const CORS_HEADERS = {
@@ -16,28 +15,40 @@ const CORS_HEADERS = {
   'Cache-Control': 's-maxage=300, stale-while-revalidate=600',
 };
 
-async function fetchFromPydolarve() {
-  const res = await fetch('https://pydolarve.org/api/v1/dollar?monitor=bcv', {
+async function fetchFromDolarApi() {
+  const res = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', {
     headers: { Accept: 'application/json' },
     signal: AbortSignal.timeout(6000),
   });
-  if (!res.ok) throw new Error(`pydolarve HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`dolarapi HTTP ${res.status}`);
   const data = await res.json();
-  const price = data?.price || data?.monitors?.bcv?.price;
-  if (!price || price <= 0) throw new Error('pydolarve: tasa inválida');
-  return { value: Number(price), source: 'pydolarve.org' };
+  const price = data?.promedio;
+  if (!price || price <= 0) throw new Error('dolarapi: tasa inválida');
+  return { value: Number(price), source: 'dolarapi.com (BCV Oficial)' };
 }
 
-async function fetchFromExchangeDNA() {
-  const res = await fetch('https://api.exchangedna.com/exchangedna/v1/rates?base=USD&quote=VES', {
+async function fetchFromOpenER() {
+  const res = await fetch('https://open.er-api.com/v6/latest/USD', {
     headers: { Accept: 'application/json' },
     signal: AbortSignal.timeout(6000),
   });
-  if (!res.ok) throw new Error(`exchangedna HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`open-er HTTP ${res.status}`);
   const data = await res.json();
-  const rate = data?.rates?.VES || data?.rate;
-  if (!rate || rate <= 0) throw new Error('exchangedna: tasa inválida');
-  return { value: Number(rate), source: 'exchangedna.com' };
+  const rate = data?.rates?.VES;
+  if (!rate || rate <= 0) throw new Error('open-er: tasa inválida');
+  return { value: Number(rate), source: 'open.er-api.com' };
+}
+
+async function fetchFromExchangeRateV4() {
+  const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD', {
+    headers: { Accept: 'application/json' },
+    signal: AbortSignal.timeout(6000),
+  });
+  if (!res.ok) throw new Error(`exchangerate-v4 HTTP ${res.status}`);
+  const data = await res.json();
+  const rate = data?.rates?.VES;
+  if (!rate || rate <= 0) throw new Error('exchangerate-v4: tasa inválida');
+  return { value: Number(rate), source: 'exchangerate-api.com' };
 }
 
 async function fetchFromBCVdirect() {
@@ -74,8 +85,9 @@ export default async function handler(req, res) {
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
 
   const strategies = [
-    { name: 'pydolarve', fn: fetchFromPydolarve },
-    { name: 'exchangedna', fn: fetchFromExchangeDNA },
+    { name: 'dolarapi', fn: fetchFromDolarApi },
+    { name: 'open-er', fn: fetchFromOpenER },
+    { name: 'exchangerate-v4', fn: fetchFromExchangeRateV4 },
     { name: 'bcv-direct', fn: fetchFromBCVdirect },
   ];
 

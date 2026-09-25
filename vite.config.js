@@ -59,7 +59,7 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: /^https?:\/\/(pydolarve\.org|api\.exchangedna\.com)\//i,
+            urlPattern: /^https?:\/\/(ve\.dolarapi\.com|open\.er-api\.com|pydolarve\.org|api\.exchangedna\.com)\//i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'bcv-rate-cache',
