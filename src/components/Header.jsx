@@ -70,8 +70,8 @@ export function Header({ activeTab, onChangeTab, onOpenProfile, historyCount = 0
           </button>
         </nav>
 
-        {/* Acciones del Sistema */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Acciones del Sistema - Solo en Desktop */}
+        <div className="hidden lg:flex items-center gap-1.5 sm:gap-2">
           <button
             type="button"
             onClick={() => setShowInfo(true)}
@@ -86,11 +86,11 @@ export function Header({ activeTab, onChangeTab, onOpenProfile, historyCount = 0
             onClick={toggle}
             aria-label="Cambiar tema"
             title="Cambiar tema"
-            className="hidden sm:flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
           >
             {dark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-          <div className="h-4 w-[1px] bg-gray-200 dark:bg-gray-800 mx-0.5 hidden sm:block" />
+          <div className="h-4 w-[1px] bg-gray-200 dark:bg-gray-800 mx-0.5" />
           <UserMenu onOpenProfile={onOpenProfile} />
         </div>
       </div>

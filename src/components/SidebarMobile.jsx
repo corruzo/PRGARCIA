@@ -1,11 +1,14 @@
 import { createPortal } from 'react-dom';
-import { X, Calculator, Bookmark, User, LogOut, Sun, Moon, ShieldCheck } from 'lucide-react';
+import { X, Calculator, Bookmark, User, LogOut, Sun, Moon, CircleHelp } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { InfoModal } from './InfoModal';
+import { useState } from 'react';
 
 export function SidebarMobile({ open, onClose, activeTab, onChangeTab, onOpenProfile, historyCount = 0 }) {
   const { user, logout } = useAuth();
   const { dark, toggle } = useTheme();
+  const [showInfo, setShowInfo] = useState(false);
 
   if (!open) return null;
 
@@ -112,6 +115,15 @@ export function SidebarMobile({ open, onClose, activeTab, onChangeTab, onOpenPro
               <User size={16} className="text-brand-600 dark:text-brand-400" />
               <span>Mi Perfil</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => setShowInfo(true)}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+            >
+              <CircleHelp size={16} className="text-gray-500" />
+              <span>Cómo se calcula</span>
+            </button>
           </nav>
         </div>
 
@@ -141,6 +153,7 @@ export function SidebarMobile({ open, onClose, activeTab, onChangeTab, onOpenPro
           </button>
         </div>
       </aside>
+      <InfoModal open={showInfo} onClose={() => setShowInfo(false)} />
     </div>,
     document.body,
   );
